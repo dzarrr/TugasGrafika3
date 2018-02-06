@@ -165,10 +165,25 @@ int main()
     //Kotak yang diisi minY = 75 maxY = 275 minX = 75 maxX = 225 (untuk Huruf C)
 
     int minKotakY = 100, maxKotakY = 275, minKotakX = 75, maxKotakX = 225; 
-    int iteranY = minKotakY, iteranX = minKotakX;    bool fill = false; 
+    int iteranY = minKotakY, iteranX = minKotakX;    bool fill = false; bool edge = false; bool first = false;
     while(1) {
         if (iteranY < maxKotakY){
-            if ((buffer[iteranY][iteranX] == '-') && (buffer[iteranY][iteranX+1] == '#') && (buffer[iteranY][iteranX+2] == '-')){
+            if ((buffer[iteranY][iteranX] == '-') && (buffer[iteranY][iteranX+1] == '#')){
+                if (buffer[iteranY][iteranX+2] == '-') {
+                    if (fill) {
+                        fill = false;
+                    }
+                    else {
+                        fill = true;
+                        first = true;
+                        iteranX++;
+                    }
+                }
+                else {
+                    fill = true;
+                }
+            }
+            if ((buffer[iteranY][iteranX] == '#') && (buffer[iteranY][iteranX+1] == '#') && (buffer[iteranY][iteranX+2] == '-')){
                 if (fill) {
                     fill = false;
                 }
@@ -176,17 +191,34 @@ int main()
                     fill = true;
                     iteranX++;
                 }
-            } 
+            }
+
+            if ((buffer[iteranY][iteranX-1] == '-') && (buffer[iteranY][iteranX] == '#') && (buffer[iteranY][iteranX+1] == '-')) {
+                if (!first){
+                    edge = true;    
+                }
+                
+            }
+
             if (iteranX == maxKotakX){
                 iteranY ++; 
                 iteranX = minKotakX;
                 fill = false;
             }
 
-            if (fill)
-                 buffer[iteranY][iteranX] = '#';
+            if (fill || edge) {
+                buffer[iteranY][iteranX] = '#';
+
+                if (edge && !first) {
+                    buffer[iteranY][iteranX-1] = '#';
+                    edge = false;
+                }
+                if (first){
+                    first = false;
+                }
+            }
             else 
-                 buffer[iteranY][iteranX] = '-';
+                buffer[iteranY][iteranX] = '-';
 
         }
         draw(vinfo, finfo, fbp, &buffer, location);
