@@ -22,7 +22,7 @@ struct fb_fix_screeninfo finfo;
 void startBuffer(char*** buffer){
     (*buffer) = (char**) malloc (maxY * sizeof(char*));
     for (int i = 1; i < maxY; i++)
-        (*buffer)[i] = (char*) malloc (maxX * sizeof(char*));
+        (*buffer)[i] = (char*) malloc (maxX * sizeof(char));
 }
 
 void setBlackScreen(char*** buffer){
@@ -163,7 +163,7 @@ void draw(char*** buffer){
 }
 
 void raster(char*** buffer, int i, int minKotakX, int maxKotakX) {
-    struct Point* pos = (struct Point*) malloc (100 * sizeof(struct Point*));
+    struct Point* pos = (struct Point*) malloc (1000 * sizeof(struct Point*));
     int count = 0;
     int j = minKotakX;
 
@@ -202,12 +202,16 @@ void raster(char*** buffer, int i, int minKotakX, int maxKotakX) {
     }
 }
 
-void drawSquare(char*** buffer, int size, int xOrigin, int yOrigin){
+void drawBody(char*** buffer, int size, int xOrigin, int yOrigin){
     struct Point A, B, C, D;
     A.x = xOrigin - size; A.y = yOrigin - size;
     B.x = xOrigin + size; B.y = yOrigin - size;
     C.x = xOrigin + size; C.y = yOrigin + size;
     D.x = xOrigin - size; D.y = yOrigin + size;
+    // E.x = xOrigin - size; E.y = yOrigin + size;
+    // F.x = xOrigin - size; F.y = yOrigin + size;
+    // G.x = xOrigin - size; G.y = yOrigin + size;
+    // H.x = xOrigin - size; H.y = yOrigin + size;
 
     drawLine(buffer, A, B); drawLine(buffer, B, C); drawLine(buffer, C, D); drawLine(buffer, D, A);
     for (int i = 5; i <= yOrigin + size; i++){
@@ -232,10 +236,6 @@ void drawSayapKiri(char*** buffer, int size, int xOrigin, int yOrigin) {
     D.x = C.x - (4*size);
     D.y = C.y;
 
-    printf("Garus A %d %d\n", A.x, A.y);
-    printf("Garys B %d %d\n", B.x, B.y);
-    printf("%d %d\n", C.x, C.y);
-    printf("%d %d\n", D.x, D.y);
     drawLine(buffer, A, B);
     drawLine(buffer, B, C);
     drawLine(buffer, C, D);
@@ -263,10 +263,6 @@ void drawSayapKanan(char*** buffer, int size, int xOrigin, int yOrigin) {
     C.x = D.x + (4*size);
     C.y = D.y;
 
-    printf("Garus A %d %d\n", A.x, A.y);
-    printf("Garys B %d %d\n", B.x, B.y);
-    printf("%d %d\n", C.x, C.y);
-    printf("%d %d\n", D.x, D.y);
     drawLine(buffer, A, B);
     drawLine(buffer, B, C);
     drawLine(buffer, C, D);
@@ -329,8 +325,8 @@ int main()
     int yOrigin = 200;
     int size = 1;
 
-    for (int i = size; i <= size + 25; i++){
-        drawSquare(&buffer, i, xOrigin, yOrigin);
+    for (int i = size; i <= size + 100; i++){
+        drawBody(&buffer, i, xOrigin, yOrigin);
         drawSayapKiri(&buffer, i, xOrigin, yOrigin);
         drawSayapKanan(&buffer, i, xOrigin, yOrigin);
 
