@@ -211,7 +211,68 @@ void drawSquare(char*** buffer, int size, int xOrigin, int yOrigin){
 
     drawLine(buffer, A, B); drawLine(buffer, B, C); drawLine(buffer, C, D); drawLine(buffer, D, A);
     for (int i = 5; i <= yOrigin + size; i++){
-        raster(buffer, i, 5, 1300);
+        raster(buffer, i, A.x, B.x);
+    }
+}
+
+void drawSayapKiri(char*** buffer, int size, int xOrigin, int yOrigin) {
+    struct Point A, B, C, D, AtasKiri, BawahKiri;
+    AtasKiri.x = xOrigin - size; AtasKiri.y = yOrigin - size;
+    BawahKiri.x = xOrigin - size; BawahKiri.y = yOrigin + size;
+
+    B.x = xOrigin - size; 
+    B.y = (AtasKiri.y + ((1.275)*size));
+
+    C.x = xOrigin - size;
+    C.y = (BawahKiri.y - ((1.275)*size));
+
+    A.x = B.x - (4*size);
+    A.y = B.y;
+
+    D.x = C.x - (4*size);
+    D.y = C.y;
+
+    printf("Garus A %d %d\n", A.x, A.y);
+    printf("Garys B %d %d\n", B.x, B.y);
+    printf("%d %d\n", C.x, C.y);
+    printf("%d %d\n", D.x, D.y);
+    drawLine(buffer, A, B);
+    drawLine(buffer, B, C);
+    drawLine(buffer, C, D);
+    drawLine(buffer, D, A);
+    for (int i = 5; i <= yOrigin + size; i++){
+        raster(buffer, i, A.x, B.x);
+    }
+}
+
+
+void drawSayapKanan(char*** buffer, int size, int xOrigin, int yOrigin) {
+    struct Point A, B, C, D, AtasKanan, BawahKanan;
+    AtasKanan.x = xOrigin + size; AtasKanan.y = yOrigin - size;
+    BawahKanan.x = xOrigin + size; BawahKanan.y = yOrigin + size;
+
+    A.x = xOrigin + size; 
+    A.y = (AtasKanan.y + ((1.275)*size));
+
+    D.x = xOrigin + size;
+    D.y = (BawahKanan.y - ((1.275)*size));
+
+    B.x = A.x + (4*size);
+    B.y = A.y;
+
+    C.x = D.x + (4*size);
+    C.y = D.y;
+
+    printf("Garus A %d %d\n", A.x, A.y);
+    printf("Garys B %d %d\n", B.x, B.y);
+    printf("%d %d\n", C.x, C.y);
+    printf("%d %d\n", D.x, D.y);
+    drawLine(buffer, A, B);
+    drawLine(buffer, B, C);
+    drawLine(buffer, C, D);
+    drawLine(buffer, D, A);
+    for (int i = 5; i <= yOrigin + size; i++){
+        raster(buffer, i, A.x, B.x);
     }
 }
 
@@ -268,10 +329,14 @@ int main()
     int yOrigin = 200;
     int size = 1;
 
-    for (int i = size; i <= size + 20; i++){
+    for (int i = size; i <= size + 25; i++){
         drawSquare(&buffer, i, xOrigin, yOrigin);
+        drawSayapKiri(&buffer, i, xOrigin, yOrigin);
+        drawSayapKanan(&buffer, i, xOrigin, yOrigin);
+
         draw(&buffer);
         usleep(10000);
+        setBlackScreen(&buffer);
     }
 
     munmap(fbp, screensize);
