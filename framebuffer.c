@@ -203,19 +203,47 @@ void raster(char*** buffer, int i, int minKotakX, int maxKotakX) {
 }
 
 void drawBody(char*** buffer, int size, int xOrigin, int yOrigin){
-    struct Point A, B, C, D;
-    A.x = xOrigin - size; A.y = yOrigin - size;
-    B.x = xOrigin + size; B.y = yOrigin - size;
-    C.x = xOrigin + size; C.y = yOrigin + size;
-    D.x = xOrigin - size; D.y = yOrigin + size;
-    // E.x = xOrigin - size; E.y = yOrigin + size;
-    // F.x = xOrigin - size; F.y = yOrigin + size;
-    // G.x = xOrigin - size; G.y = yOrigin + size;
-    // H.x = xOrigin - size; H.y = yOrigin + size;
+    struct Point A, B, C, D, E, F, G, H;
+    A.x = xOrigin - size; A.y = yOrigin - size * 0.5;
+    B.x = xOrigin - size * 0.5; B.y = yOrigin - size;
+    C.x = xOrigin + size * 0.5; C.y = yOrigin - size;
+    D.x = xOrigin + size; D.y = yOrigin - size * 0.5;
+    E.x = xOrigin + size; E.y = yOrigin + size * 0.5;
+    F.x = xOrigin + size * 0.5; F.y = yOrigin + size;
+    G.x = xOrigin - size * 0.5; G.y = yOrigin + size;
+    H.x = xOrigin - size; H.y = yOrigin + size * 0.5;
+
+    drawLine(buffer, A, B); drawLine(buffer, B, C); drawLine(buffer, C, D); drawLine(buffer, D, E);
+    drawLine(buffer, E, F); drawLine(buffer, F, G); drawLine(buffer, G, H); drawLine(buffer, H, A);
+    for (int i = 5; i <= yOrigin + size; i++){
+        raster(buffer, i, xOrigin-size, xOrigin+size);
+    }
+}
+
+void drawParasut(char*** buffer, int size, int xOrigin, int yOrigin){
+    struct Point A, B, C, D, E, F, G, H, I, J, K, L, M, N;
+    A.x = xOrigin - size * 2; A.y = yOrigin + size;
+    B.x = xOrigin - size; B.y = yOrigin - size;
+    C.x = xOrigin + size; C.y = yOrigin - size;
+    D.x = xOrigin + size * 2; D.y = yOrigin + size;
+    E.x = xOrigin - size * 0.5; E.y = yOrigin + size;
+    F.x = xOrigin + size * 0.5; F.y = yOrigin + size;
+    G.x = xOrigin; G.y = yOrigin + size * 5;
+    H.x = xOrigin; H.y = yOrigin + size * 5.65;
+    I.x = xOrigin - size * 0.15; I.y = yOrigin + size * 5.35;
+    J.x = xOrigin + size * 0.15; J.y = yOrigin + size * 5.35;
+    K.x = xOrigin - size * 0.15; K.y = yOrigin + size * 5.85;
+    L.x = xOrigin + size * 0.15; L.y = yOrigin + size * 5.85;
+    M.x = xOrigin; M.y = yOrigin + size * 5.15;
+    N.x = xOrigin; N.y = yOrigin + size * 5.65;
 
     drawLine(buffer, A, B); drawLine(buffer, B, C); drawLine(buffer, C, D); drawLine(buffer, D, A);
-    for (int i = 5; i <= yOrigin + size; i++){
-        raster(buffer, i, A.x, B.x);
+    drawLine(buffer, A, G); drawLine(buffer, E, G); drawLine(buffer, F, G); drawLine(buffer, D, G); drawLine(buffer, G, H);
+    drawLine(buffer, I, M); drawLine(buffer, J, M); drawLine(buffer, K, N); drawLine(buffer, L, N);
+
+
+    for (int i = yOrigin - size; i <= yOrigin + size; i++){
+        raster(buffer, i, xOrigin - size * 2, xOrigin + size * 2);
     }
 }
 
@@ -325,11 +353,24 @@ int main()
     int yOrigin = 200;
     int size = 1;
 
+    
     for (int i = size; i <= size + 100; i++){
-        drawBody(&buffer, i, xOrigin, yOrigin);
-        drawSayapKiri(&buffer, i, xOrigin, yOrigin);
-        drawSayapKanan(&buffer, i, xOrigin, yOrigin);
+         drawBody(&buffer, i, xOrigin, yOrigin);
+         drawSayapKiri(&buffer, i, xOrigin, yOrigin);
+         drawSayapKanan(&buffer, i, xOrigin, yOrigin);
 
+         draw(&buffer);
+         usleep(10000);
+         setBlackScreen(&buffer);
+    }
+
+    setBlackScreen(&buffer);
+    draw(&buffer);
+    usleep(500000);
+
+
+    for(int i = yOrigin; i  <= 570; i++){
+        drawParasut(&buffer, 30, xOrigin, i);
         draw(&buffer);
         usleep(10000);
         setBlackScreen(&buffer);
