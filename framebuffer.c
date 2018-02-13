@@ -1,12 +1,3 @@
-/*
-To test that the Linux framebuffer is set up correctly, and that the device permissions
-are correct, use the program below which opens the frame buffer and draws a gradient-
-filled red square:
-retrieved from:
-Testing the Linux Framebuffer for Qtopia Core (qt4-x11-4.2.2)
-http://cep.xor.aps.anl.gov/software/qt4-x11-4.2.2/qtopiacore-testingframebuffer.html
-*/
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -24,6 +15,10 @@ struct Point{
     int x;
 };
 
+char *fbp = 0;
+struct fb_var_screeninfo vinfo;
+struct fb_fix_screeninfo finfo;
+
 void startBuffer(char*** buffer){
     (*buffer) = (char**) malloc (maxY * sizeof(char*));
     for (int i = 1; i < maxY; i++)
@@ -36,41 +31,99 @@ void setBlackScreen(char*** buffer){
             (*buffer)[i][j] = '-';
 }
 
-void drawVerticalLine(char*** buffer, int start, int finish, int horizontalPosition){
-    if (finish < start){
-        int temp = start;
-        start = finish;
-        finish = temp;
+void drawLine(char*** buffer, struct Point p1, struct Point p2)
+{
+    int x, y, dx, dy, dx1, dy1, px, py, xe, ye, i, x1, x2, y1, y2;
+    x1 = p1.x;
+    x2 = p2.x;
+    y1 = p1.y;
+    y2 = p2.y;
+    dx = p2.x - p1.x;
+    dy = p2.y - p1.y;
+    dx1 = abs(dx);
+    dy1 = abs(dy);
+    px = 2 * dy1 - dx1;
+    py = 2 * dx1 - dy1;
+    if (dy1 <= dx1)
+    {
+        if (dx>=0)
+        {
+            x = x1;
+            y = y1;
+            xe = x2;
+        }
+        else
+        {
+            x = x2;
+            y = y2;
+            xe = x1;
+        }
+        (*buffer)[y][x] = '#';
+        for (i = 0; x < xe; i++)
+        {
+            x = x + 1;
+            if (px < 0)
+            {
+                px = px + 2 * dy1;
+            }
+            else
+            {
+                if((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
+                {
+                    y = y + 1;
+                }
+                else
+                {
+                    y = y - 1;
+                }
+                px = px + 2 * (dy1 - dx1);
+            }       
+            (*buffer)[y][x] = '#';
+        }     
     }
-    for (int i=start; i<= finish; i++)
-        (*buffer)[i][horizontalPosition] = '#';
-}
-
-void drawHorizontalLine(char*** buffer, int start, int finish, int verticalPosition){
-    if (finish < start){
-        int temp = start;
-        start = finish;
-        finish = temp;
+    else
+    {
+        if ( dy >= 0 )
+        {
+            x = x1;
+            y = y1;
+            ye = y2;
+        }
+        else
+        {
+           x = x2;
+           y = y2;
+           ye = y1;
+        }
+        (*buffer)[y][x] = '#';
+        for (i = 0; y < ye; i++)
+        {
+            y = y + 1;
+            if (py <= 0)
+            {
+                py= py + 2 * dx1;
+            }
+            else
+            {
+                if (( dx < 0 && dy < 0) || (dx > 0 && dy > 0))
+                {
+                    x = x + 1;
+                }
+                else
+                {
+                    x = x - 1;
+                }
+                py = py + 2 * (dx1 - dy1);
+            }
+            (*buffer)[y][x] = '#';
+        }
     }
-    for (int i=start; i<= finish; i++)
-        (*buffer)[verticalPosition][i] = '#';
-}
-
-void drawC(char*** buffer, struct Point A, struct Point B, struct Point C, struct Point D, struct Point E, struct Point F, struct Point G, struct Point H){
-    drawVerticalLine(buffer, A.y, B.y, A.x);
-    drawHorizontalLine(buffer, B.x, C.x, B.y);
-    drawVerticalLine(buffer, C.y, D.y, C.x);
-    drawHorizontalLine(buffer, D.x, E.x, E.y);
-    drawVerticalLine(buffer, E.y, F.y, E.x);
-    drawHorizontalLine(buffer, F.x, G.x, F.y);
-    drawVerticalLine(buffer, G.y, H.y, G.x);
-    drawHorizontalLine(buffer, H.x, A.x, H.y);
 }
 
 
-void draw(struct fb_var_screeninfo vinfo, struct fb_fix_screeninfo finfo, char *fbp, char ***buffer, long int location ){
-
-    for (int y = 1; y < maxY; y++)
+void draw(char*** buffer){
+    long int location;
+    for (int y = 1; y < maxY; y++) {
         for (int x = 1; x < maxX; x++) {
 
             location = (x+vinfo.xoffset) * (vinfo.bits_per_pixel/8) +
@@ -89,7 +142,6 @@ void draw(struct fb_var_screeninfo vinfo, struct fb_fix_screeninfo finfo, char *
                     *(fbp + location + 3) = 255;      // No transparency
 
                 }
-        //location += 4;
             } else  { //assume 16bpp
                 if ((*buffer)[y][x] == '-') {
                     int b = 0;
@@ -107,17 +159,67 @@ void draw(struct fb_var_screeninfo vinfo, struct fb_fix_screeninfo finfo, char *
             }
 
         }
+    }
+}
+
+void raster(char*** buffer, int i, int minKotakX, int maxKotakX) {
+    struct Point* pos = (struct Point*) malloc (100 * sizeof(struct Point*));
+    int count = 0;
+    int j = minKotakX;
+
+    while (j <= maxKotakX) {
+        if ((*buffer)[i][j] == '#') {
+            pos[count].x = j;
+            pos[count].y = i;
+            count++;
+        }
+        j++;
+    }
+    if (count > 1) {
+        if (count % 2 == 0) {
+            bool fill = true;
+            int now = 1;
+            while (now < count) {
+                if (fill)
+                    for (int k = pos[now-1].x; k < pos[now].x; k++)
+                        (*buffer)[pos[now].y][k] = '#';
+                now++;
+                fill = !fill;
+            }
+        }
+        else {
+            bool fill = true;
+            int now = 1;
+            while (now < count) {
+                if (fill)
+                    for (int k = pos[now-1].x; k < pos[now].x; k++)
+                        (*buffer)[pos[now].y][k] = '#';
+                if (now != count / 2)
+                    fill = !fill;
+                now++;
+            }
+        }
+    }
+}
+
+void drawSquare(char*** buffer, int size, int xOrigin, int yOrigin){
+    struct Point A, B, C, D;
+    A.x = xOrigin - size; A.y = yOrigin - size;
+    B.x = xOrigin + size; B.y = yOrigin - size;
+    C.x = xOrigin + size; C.y = yOrigin + size;
+    D.x = xOrigin - size; D.y = yOrigin + size;
+
+    drawLine(buffer, A, B); drawLine(buffer, B, C); drawLine(buffer, C, D); drawLine(buffer, D, A);
+    for (int i = 5; i <= yOrigin + size; i++){
+        raster(buffer, i, 5, 1300);
+    }
 }
 
 int main()
 {
     int fbfd = 0;
-    struct fb_var_screeninfo vinfo;
-    struct fb_fix_screeninfo finfo;
     long int screensize = 0;
-    char *fbp = 0;
     int x = 0, y = 0;
-    long int location = 0;
     char **buffer;
     startBuffer(&buffer);
 
@@ -154,77 +256,23 @@ int main()
     }
     printf("The framebuffer device was mapped to memory successfully.\n");
 
-    x = 1; y = 1;       // Where we are going to put the pixel
-
-
     setBlackScreen(&buffer);
 
-    struct Point A, B, C, D, E, F, G, H;
-    A.x = 100; A.y = 100; B.x = 100; B.y = 250; C.x = 200; C.y = 250; D.x = 200; D.y = 225; E.x = 125; E.y = 225; F.x = 125; F.y = 125; G.x = 200; G.y = 125; H.x = 200; H.y = 100;
-    drawC(&buffer, A, B, C, D, E, F, G, H);    
-    //Kotak yang diisi minY = 75 maxY = 275 minX = 75 maxX = 225 (untuk Huruf C)
+    int minKotakY = 100, maxKotakY = 275;   
+    bool fill = false; 
+    bool edge = false; 
+    bool first = false;
+    int minKotakX, maxKotakX, j;
 
-    int minKotakY = 100, maxKotakY = 275, minKotakX = 75, maxKotakX = 225; 
-    int iteranY = minKotakY, iteranX = minKotakX;    bool fill = false; bool edge = false; bool first = false;
-    while(1) {
-        if (iteranY < maxKotakY){
-            if ((buffer[iteranY][iteranX] == '-') && (buffer[iteranY][iteranX+1] == '#')){
-                if (buffer[iteranY][iteranX+2] == '-') {
-                    if (fill) {
-                        fill = false;
-                    }
-                    else {
-                        fill = true;
-                        first = true;
-                        iteranX++;
-                    }
-                }
-                else {
-                    fill = true;
-                }
-            }
-            if ((buffer[iteranY][iteranX] == '#') && (buffer[iteranY][iteranX+1] == '#') && (buffer[iteranY][iteranX+2] == '-')){
-                if (fill) {
-                    fill = false;
-                }
-                else {
-                    fill = true;
-                    iteranX++;
-                }
-            }
+    int xOrigin = 675; 
+    int yOrigin = 200;
+    int size = 1;
 
-            if ((buffer[iteranY][iteranX-1] == '-') && (buffer[iteranY][iteranX] == '#') && (buffer[iteranY][iteranX+1] == '-')) {
-                if (!first){
-                    edge = true;    
-                }
-                
-            }
-
-            if (iteranX == maxKotakX){
-                iteranY ++; 
-                iteranX = minKotakX;
-                fill = false;
-            }
-
-            if (fill || edge) {
-                buffer[iteranY][iteranX] = '#';
-
-                if (edge && !first) {
-                    buffer[iteranY][iteranX-1] = '#';
-                    edge = false;
-                }
-                if (first){
-                    first = false;
-                }
-            }
-            else 
-                buffer[iteranY][iteranX] = '-';
-
-        }
-        draw(vinfo, finfo, fbp, &buffer, location);
-        iteranX++;
+    for (int i = size; i <= size + 20; i++){
+        drawSquare(&buffer, i, xOrigin, yOrigin);
+        draw(&buffer);
+        usleep(10000);
     }
-
 
     munmap(fbp, screensize);
     close(fbfd);
